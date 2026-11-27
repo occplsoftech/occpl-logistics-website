@@ -1,0 +1,43 @@
+name: Deploy
+
+# Deploys pro.occpllogistics.com as soon as something is merged to main.
+# The server's restricted key runs only deploy/hook-deploy.sh. Without the WEBSITE_DEPLOY_KEY secret this job
+# does nothing and the server's 2-minute cron check deploys instead (it also stays on as a backup).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Deploy to pro.occpllogistics.com
+        env:
+          KEY: ${{ secrets.WEBSITE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::warning::WEBSITE_DEPLOY_KEY is not set; the server's 2-minute check deploys instead"
+            exit 0
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo '65.0.187.198 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGcCZxhB1xRAdGsyvH5oTtLLbWh5B/IJ/rRVI2BMd7QE' > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 occpl@65.0.187.198
+      - name: Check the public site
+        run: |
+          for p in / /services/ /track/ /customer-tools/; do
+            curl -fsS -m 20 -o /dev/null -w "%{http_code} $p\n" "https://pro.occpllogistics.com$p"
+          done
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

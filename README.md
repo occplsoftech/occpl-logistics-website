@@ -62,6 +62,12 @@ The installed copies of the script and Compose file are in `~/occpl-website-auto
 copy them by hand after changing them here. There: `deployed` and `failed` hold commit SHAs (delete `failed` to retry) and `deploy.log`
 is the log. To stop auto deploy, remove its line from `crontab -e`.
 
+**Deploy on merge:** `.github/workflows/deploy.yml` runs on every push to main (or by hand from the Actions tab) and deploys
+at once instead of waiting for cron. It connects with the `WEBSITE_DEPLOY_KEY` repository secret, whose public key is in the
+server's `~/.ssh/authorized_keys` as `command="/home/occpl/occpl-website-auto/hook-deploy.sh",restrict`, so that key can
+only start a deploy. `deploy/hook-deploy.sh` runs `auto-deploy.sh` (same lock as cron), then fails the job if main did not
+go live. Without the secret the job skips and cron still deploys. The installed hook is a hand-made copy, like the others.
+
 ## SEO
 The build adds canonical links, social tags, robots rules, the sitemap and JSON-LD (breadcrumbs, FAQ, services).
 Change the domain with `SITE_URL`. 404 is `noindex`.
