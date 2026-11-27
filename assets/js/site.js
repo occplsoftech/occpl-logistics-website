@@ -374,8 +374,8 @@
       $('#vol-out').innerHTML = '<table class="vt"><caption>Actual weight: ' + kg(a) + '</caption><thead><tr><th scope="col">Service</th><th scope="col">Volumetric</th><th scope="col">Chargeable</th></tr></thead><tbody>' +
         volServices.map(function (s) {
           var v = l * w * h / s.divisor * n;
-          // Cargo is weighed by volume in cubic feet: (L x B x H cm / 27000) x CFT factor (kg per CFT)
-          var cft = /^cargo$/i.test(s.service.trim()) ? '<small class="vt-cft">' + (l * w * h * n / 27000).toFixed(2) + ' CFT</small>' : '';
+          // Cargo and Surface Cargo are weighed by volume in cubic feet: (L x B x H cm / 27000) x CFT factor (kg per CFT)
+          var cft = /^(surface )?cargo$/i.test(s.service.trim()) ? '<small class="vt-cft">' + (l * w * h * n / 27000).toFixed(2) + ' CFT</small>' : '';
           return '<tr><th scope="row">' + esc(title(s.service)) + cft + '</th><td>' + kg(v) + '</td><td><b>' + kg(Math.max(v, a)) + '</b></td></tr>';
         }).join('') + '</tbody></table>';
     };
